@@ -8,6 +8,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -23,7 +24,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $users,
-        ]);
+        ], 200, [], JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -84,7 +85,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $user,
-        ]);
+        ], 200, [], JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -131,7 +132,7 @@ class UserController extends Controller
                 'success' => true,
                 'message' => 'User updated successfully',
                 'data' => $user,
-            ]);
+            ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -185,16 +186,63 @@ class UserController extends Controller
         }
     }
 
+    /**
+     * Export users to Excel.
+     */
     public function exportExcel()
     {
         return Excel::download(new UsersExport(), 'products.xlsx');
     }
 
+    /**
+     * Export users to PDF.
+     */
     public function exportPdf()
     {
         $users = User::all();
         $pdf = Pdf::loadView('users.pdf', compact('users'));
 
         return $pdf->download('users.pdf');
+    }
+
+    /**
+     * Upload user profile photo.
+     */
+    public function uploadPhoto(Request $request, string $id): JsonResponse
+    {
+        $user = User::find($id);
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        // Validar que el usuario autenticado es quien modifica su perfil
+        if ($request->user()->id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Validación del archivo
+        $request->validate([
+            'photo' => ['required', 'image', 'max:2048'], // 2MB Max
+        ]);
+
+        // Si el usuario ya tiene una foto, la eliminamos de S3 para no guardar basura
+        if ($user->picture_profile) {
+            Storage::disk('s3')->delete($user->picture_profile);
+        }
+
+        // Guardamos la nueva foto en S3 y obtenemos la ruta
+        $path = $request->file('photo')->store('profile-photos', 's3');
+
+        // Actualizamos el documento del usuario en MongoDB con la nueva ruta
+        $user->forceFill([
+            'picture_profile' => $path,
+        ])->save();
+
+        // Retornamos el usuario actualizado con la nueva URL de la foto
+        return response()->json($user->fresh());
     }
 }

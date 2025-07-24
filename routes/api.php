@@ -54,6 +54,7 @@ Route::middleware(['api'])->group(function () {
             Route::apiResource('users', UserController::class)->except(['create', 'edit']);
             Route::get('users/export/excel', [UserController::class, 'exportExcel']);
             Route::get('users/export/pdf', [UserController::class, 'exportPdf']);
+            Route::post('users/{id}/photo', [UserController::class, 'uploadPhoto']);
             // Resource routes for roles
             Route::apiResource('roles', RoleController::class)->except(['create', 'edit']);
             Route::get('roles/export/excel', [RoleController::class, 'exportExcel']);
