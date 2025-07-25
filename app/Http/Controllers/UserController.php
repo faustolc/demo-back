@@ -219,11 +219,6 @@ class UserController extends Controller
             ], 404);
         }
 
-        // Validar que el usuario autenticado es quien modifica su perfil
-        if ($request->user()->id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         // Validación del archivo
         $request->validate([
             'photo' => ['required', 'image', 'max:2048'], // 2MB Max
