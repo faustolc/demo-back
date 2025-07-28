@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\UsersExport;
+use App\Models\Role;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
 use Maatwebsite\Excel\Facades\Excel;
+use MongoDB\Laravel\Eloquent\Casts\ObjectId;
 
 class UserController extends Controller
 {
@@ -37,7 +39,6 @@ class UserController extends Controller
                 'name' => ['required', 'string', 'max:255'],
                 'username' => ['required', 'string', 'max:255', 'unique:users'],
                 'email' => ['nullable', 'email', 'max:255', 'unique:users'],
-                'picture_profile' => ['nullable', 'string'],
                 'phone' => ['nullable', 'string', 'max:20'],
                 'password' => ['required', Rules\Password::defaults()],
             ]);
@@ -49,17 +50,19 @@ class UserController extends Controller
             ], 422);
         }
 
+        // Find default role
+        $defaultRole = Role::where('name', 'user')->first();
+
         $userData = [
             'name' => $request->name,
             'username' => $request->username,
             'password' => Hash::make($request->password),
             'email' => $request->email,
-            'picture_profile' => $request->picture_profile,
             'phone' => $request->phone,
-            'roles' => ['user'], // Default role
         ];
 
         $user = User::create($userData);
+        $user->roles()->attach($defaultRole->id); // Attach default role
 
         return response()->json([
             'success' => true,
@@ -107,19 +110,16 @@ class UserController extends Controller
                 'name' => ['sometimes', 'string', 'max:255'],
                 'username' => ['sometimes', 'string', 'max:255', 'unique:users,username,' . $id],
                 'email' => ['nullable', 'email', 'max:255', 'unique:users,email,' . $id],
-                'picture_profile' => ['nullable', 'string'],
                 'phone' => ['nullable', 'string', 'max:20'],
                 'password' => ['sometimes', Rules\Password::defaults()],
-                'roles' => ['nullable', 'array'],
+                'role_ids' => ['nullable', 'array'],
             ]);
 
             $updateData = $request->only([
                 'name',
                 'username',
                 'email',
-                'picture_profile',
                 'phone',
-                'roles',
             ]);
 
             if ($request->has('password')) {
@@ -128,10 +128,19 @@ class UserController extends Controller
 
             $user->update($updateData);
 
+            // --- LÓGICA DE ROLES CORREGIDA ---
+            if ($request->has('role_ids')) {
+                // Pasa el arreglo de strings tal como viene del request.
+                // El método sync() debe encargarse de la conversión internamente.
+                $user->roles()->sync($request->role_ids);
+            } else {
+                $user->roles()->sync([]);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'User updated successfully',
-                'data' => $user,
+                'data' => $user->fresh(),
             ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Exception $e) {
             return response()->json([

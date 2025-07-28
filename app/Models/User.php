@@ -38,7 +38,7 @@ class User extends Authenticatable
         'picture_profile',
         'phone',
         'password',
-        'roles',
+        'role_ids',
     ];
 
     /**
@@ -50,6 +50,8 @@ class User extends Authenticatable
         'password',
     ];
 
+    protected $with = ['roles'];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -60,6 +62,16 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * The attributes that should be appended to the model's array form.
+     *
+     * @var list<string>
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class);
     }
 
     /**
