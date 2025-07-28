@@ -30,6 +30,7 @@ class RoleController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'authorized_sections' => 'required|array',
         ]);
         if ($validator->fails()) {
             return response()->json(['message' => $validator->messages()], Response::HTTP_BAD_REQUEST);
@@ -68,9 +69,14 @@ class RoleController extends Controller
         if (! $role) {
             return response()->json(['message' => 'Role not found'], Response::HTTP_NOT_FOUND);
         }
-        $request->validate([
-            'nombre' => 'required|string|max:255',
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'authorized_sections' => 'required|array',
         ]);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->messages()], Response::HTTP_BAD_REQUEST);
+        }
+        // Update the role with the validated data
         $role->update($request->all());
 
         return response()->json([

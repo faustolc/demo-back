@@ -25,6 +25,6 @@ class Role extends Model
      */
     protected $fillable = [
         'name',
-        'authorized_actions',
+        'authorized_sections',
     ];
 }
