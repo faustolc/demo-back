@@ -436,30 +436,13 @@
 						"method": "PUT",
 						"header": [],
 						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "name",
-									"value": "003",
-									"type": "text"
-								},
-								{
-									"key": "username",
-									"value": "user2",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "test123*",
-									"type": "text"
-								},
-								{
-									"key": "roles",
-									"value": "[\"admin\"]",
-									"type": "text",
-									"disabled": true
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Fausto\",\n    \"role_ids\":[\n        \"68803dee1dbc1c85d9009082\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
 								}
-							]
+							}
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/users/{{id}}",
@@ -471,6 +454,47 @@
 								"v1",
 								"users",
 								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UploadPhoto",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "photo",
+									"type": "file",
+									"src": "/home/faustoleyva/Downloads/photo_2023-04-25_16-22-08.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/{{id}}/photo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"{{id}}",
+								"photo"
 							]
 						}
 					},
@@ -625,14 +649,13 @@
 						"method": "PUT",
 						"header": [],
 						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "name",
-									"value": "test 3",
-									"type": "text"
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"user\",\n    \"authorized_sections\" : [\"products\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
 								}
-							]
+							}
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/roles/{{id}}",
@@ -690,7 +713,7 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8000"
+			"value": "https://farming-simulator.pstmn.io"
 		},
 		{
 			"key": "token",
